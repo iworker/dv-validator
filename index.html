@@ -1,0 +1,289 @@
+<html>
+<head>
+  <script type="text/javascript" src="exif.js"></script>
+  <script type="text/javascript">
+      function ge(id) {
+          return document.getElementById(id);
+      }
+
+      function ce(cl) {
+          return document.getElementsByClassName(cl);
+      }
+
+      function getPointClass(condition) {
+          return condition ? "failure" : "success";
+      }
+
+      function selected(files) {
+          var file = files[0];
+          var photo = ge("photo");
+          photo.file = file;
+
+          ge("size").classList.remove("failure", "success");
+          ge("size").classList.add(getPointClass(file.size > 240 * 1024 * 1024));
+
+          ge("format").classList.remove("failure", "success");
+          ge("format").classList.add(getPointClass(file.type !== "image/jpeg" && file.type !== "image/jpg"));
+
+          var reader = new FileReader();
+
+          reader.onload = (function (img) {
+              return function (e) {
+                  img.src = e.target.result;
+              }
+          })(photo);
+
+          photo.draggable = false;
+
+          photo.onload = function () {
+              var photoContainer = ge("photoContainer");
+              photoContainer.style.width = this.naturalWidth;
+              photoContainer.style.height = this.naturalHeight;
+              this.style.width = this.naturalWidth;
+              this.style.height = this.naturalHeight;
+
+              ge("heightInfo").textContent = "Высота: " + this.naturalHeight + "px";
+              ge("widthInfo").textContent = "Ширина: " + this.naturalWidth + "px";
+
+              ge("width").classList.remove("failure", "success");
+              ge("width").classList.add(getPointClass(this.naturalWidth < 600 || this.naturalWidth > 1200));
+
+              ge("height").classList.remove("failure", "success");
+              ge("height").classList.add(getPointClass(this.naturalHeight < 600 || this.naturalHeight > 1200));
+
+              ge("square").classList.remove("failure", "success");
+              ge("square").classList.add(getPointClass(this.naturalHeight !== this.naturalWidth));
+
+              delete this.exifdata;
+
+              EXIF.getData(this, function () {
+                  var allMetaData = EXIF.getAllTags(this);
+
+                  var xResolution = allMetaData.XResolution;
+                  var yResolution = allMetaData.YResolution;
+
+                  ge("hDPI").classList.remove("failure", "success");
+                  ge("hDPI").classList.add(getPointClass(xResolution < 300));
+
+                  ge("vDPI").classList.remove("failure", "success");
+                  ge("vDPI").classList.add(getPointClass(yResolution < 300));
+              });
+          };
+
+          reader.readAsDataURL(file);
+      }
+
+      function startmove(e) {
+          var line = this;
+          var shiftY = this.parentNode.offsetTop;
+          var maxY = this.parentNode.offsetHeight - 6;
+
+          this.style.zIndex = 1000; // над другими элементами
+
+          function moveAt(e) {
+              var top = e.pageY - shiftY;
+
+              if (top <= 0) {
+                  line.style.top = "0px";
+                  return;
+              }
+
+              if (top >= maxY) {
+                  line.style.top = maxY + 'px';
+                  return;
+              }
+
+              line.style.top = e.pageY - shiftY + 'px';
+          }
+
+          document.onmousemove = function (e) {
+              moveAt(e);
+              checkLines();
+          };
+
+          document.onmouseup = function () {
+              document.onmousemove = null;
+              this.onmouseup = null;
+          };
+      }
+
+      function dragstart() {
+          return false;
+      }
+
+      function checkLines() {
+          var containerHeight = ge('photoContainer').offsetHeight;
+          var headTop = ge('headTop').offsetTop;
+          var headBottom = ge('headBottom').offsetTop;
+          var eyes = ge('eyes').offsetTop;
+
+          var percent1 = (headBottom - headTop) / containerHeight;
+          var percent2 = (containerHeight - eyes) / containerHeight;
+
+          ge("facePoint").classList.remove("failure", "success");
+          ge("eyesPoint").classList.remove("failure", "success");
+          ge("facePoint").classList.add(getPointClass(percent1 < 0.56 || percent1 > 0.69));
+          ge("eyesPoint").classList.add(getPointClass(percent2 < 0.50 || percent2 > 0.69));
+      }
+
+      window.addEventListener("load", function () {
+          var lines = ce("line");
+          for (var i in lines) {
+              lines[i].onmousedown = startmove;
+              lines[i].ondragstart = dragstart;
+          }
+      });
+  </script>
+  <style>
+    #photo {
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+    }
+
+    #photoInfo {
+      margin: 10px;
+      height: 10px;
+      width: 400px;
+    }
+
+    #widthInfo {
+      width: 100px;
+    }
+
+    #heightInfo {
+      width: 100px;
+    }
+
+    #photoContainer {
+      margin: 10px auto;
+      border: 1px solid #000;
+      position: relative;
+      text-align: center;
+      z-index: 1;
+    }
+
+    #photoContainer:after {
+      content: "";
+      position: absolute;
+      z-index: 10;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      border-left: 4px dashed #33f;
+      transform: translate(-50%);
+    }
+
+    .line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-bottom: 4px solid #fff;
+      cursor: row-resize;
+      height: 0;
+      padding-top: 5px;
+    }
+
+    .line:active {
+      border-bottom-style: dashed;
+    }
+
+    .color {
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+
+    .color:before {
+      content: "";
+      height: 20px;
+      margin-right: 10px;
+      padding-right: 60px;
+      z-index: 10;
+      transform: translate(-50%);
+      border: 1px solid #555;
+    }
+
+    .color.color-red:before {
+      background-color: #d40;
+    }
+
+    #headTop {
+      top: 20%;
+      border-bottom-color: #d40;
+    }
+
+    .color.color-yellow:before {
+      background-color: #fd3;
+    }
+
+    #eyes {
+      top: 40%;
+      border-bottom-color: #fd3;
+    }
+
+    .color.color-green:before {
+      background-color: #4d0;
+    }
+
+    #headBottom {
+      top: 70%;
+      border-bottom-color: #4d0;
+    }
+
+    table {
+      width: 100%;
+    }
+
+    .point.success {
+      color: #4d0;
+    }
+
+    .point.failure {
+      color: #d40;
+    }
+  </style>
+</head>
+<body>
+<label for="image">Выберите файл:</label>
+<input id="image" type="file" onchange="selected(this.files)"/>
+<div id="photoInfo">
+  <span id="heightInfo">Высота: ?</span>;
+  <span id="widthInfo">Ширина: ?</span>
+</div>
+<table>
+  <tr>
+    <td>
+      <div id="points">
+        <h3>Требования:</h3>
+        <ul>
+          <li class="point" id="square">Изображение должно быть квадратным</li>
+          <li class="point" id="vDPI">Разрешение по вертикали > 300 DPI</li>
+          <li class="point" id="hDPI">Разрешение по горизонтали > 300 DPI</li>
+          <li class="point" id="size">Размер фотографии < 240KB</li>
+          <li class="point" id="format">Формат фотографии – JPEG</li>
+          <li class="point" id="width">Ширина от 600 до 1200 пикселей</li>
+          <li class="point" id="height">Высота от 600 до 1200 пикселей</li>
+          <li class="point" id="facePoint">Лицо в пределах нормы</li>
+          <li class="point" id="eyesPoint">Глаза в пределах нормы</li>
+        </ul>
+      </div>
+    </td>
+    <td>
+      <div id="help">
+        <h3>Подсказки</h3>
+        <div class="color color-red">Верхняя часть головы</div>
+        <div class="color color-yellow">Уровень глаз</div>
+        <div class="color color-green">Уровень глаз</div>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<div id="photoContainer">
+  <div id="headTop" class="line"></div>
+  <div id="eyes" class="line"></div>
+  <div id="headBottom" class="line"></div>
+  <img id="photo"/>
+</div>
+</body>
+</html>
