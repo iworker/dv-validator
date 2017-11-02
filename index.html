@@ -73,7 +73,7 @@
           reader.readAsDataURL(file);
       }
 
-      function startmove(e) {
+      function startmove() {
           var line = this;
           var shiftY = this.parentNode.offsetTop;
           var maxY = this.parentNode.offsetHeight - 6;
@@ -122,15 +122,17 @@
 
           ge("facePoint").classList.remove("failure", "success");
           ge("eyesPoint").classList.remove("failure", "success");
-          ge("facePoint").classList.add(getPointClass(percent1 < 0.56 || percent1 > 0.69));
-          ge("eyesPoint").classList.add(getPointClass(percent2 < 0.50 || percent2 > 0.69));
+          ge("facePoint").classList.add(getPointClass(percent1 < 0.50 || percent1 > 0.69));
+          ge("eyesPoint").classList.add(getPointClass(percent2 < 0.56 || percent2 > 0.69));
       }
 
       window.addEventListener("load", function () {
           var lines = ce("line");
           for (var i in lines) {
-              lines[i].onmousedown = lines[i].ontouchstart = startmove;
-              lines[i].ondragstart = dragstart;
+              if (lines.hasOwnProperty(i)) {
+                  lines[i].onmousedown = lines[i].ontouchstart = startmove;
+                  lines[i].ondragstart = dragstart;
+              }
           }
       });
   </script>
@@ -283,7 +285,7 @@
   <div id="headTop" class="line"></div>
   <div id="eyes" class="line"></div>
   <div id="headBottom" class="line"></div>
-  <img id="photo"/>
+  <img id="photo" src=""/>
 </div>
 </body>
 </html>
