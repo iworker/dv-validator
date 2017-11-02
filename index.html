@@ -96,12 +96,12 @@
               line.style.top = e.pageY - shiftY + 'px';
           }
 
-          document.onmousemove = function (e) {
+          document.onmousemove = document.ontouchmove = function (e) {
               moveAt(e);
               checkLines();
           };
 
-          document.onmouseup = function () {
+          document.onmouseup = document.ontouchend = function () {
               document.onmousemove = null;
               this.onmouseup = null;
           };
@@ -129,7 +129,7 @@
       window.addEventListener("load", function () {
           var lines = ce("line");
           for (var i in lines) {
-              lines[i].onmousedown = startmove;
+              lines[i].onmousedown = lines[i].ontouchstart = startmove;
               lines[i].ondragstart = dragstart;
           }
       });
