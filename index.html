@@ -96,12 +96,12 @@
               line.style.top = e.pageY - shiftY + 'px';
           }
 
-          document.onmousemove = document.ontouchmove = function (e) {
+          document.onmousemove = line.ontouchmove = function (e) {
               moveAt(e);
               checkLines();
           };
 
-          document.onmouseup = document.ontouchend = function () {
+          document.onmouseup = line.ontouchend = function () {
               document.onmousemove = null;
               this.onmouseup = null;
           };
